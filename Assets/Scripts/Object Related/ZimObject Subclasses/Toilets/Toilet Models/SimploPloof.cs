@@ -50,7 +50,7 @@ public class SimploPloof : ZimObject, IToilet
         {
             Debug.Log("SimploPloof broke!");
             IsBroken = true;
-            // Call the method here instead of invoking the event directly
+            //call the OnStateChanged method to raise the event
             OnStateChanged();
         }
     }
@@ -60,101 +60,101 @@ public class SimploPloof : ZimObject, IToilet
     }
 }
 
-
-    public void Flush()
-    {
-        if (CanFlush)
-        {
-            Debug.Log("Flushing SimploPloof...");
-            useCount = 0;
-        }
-        else
-        {
-            Debug.Log("SimploPloof does not need flushing right now.");
-        }
-    }
-
-    public void Clean()
-    {
-        if (NeedsCleaning)
-        {
-            Debug.Log("Cleaning SimploPloof...");
-            useCount = 0;
-        }
-        else
-        {
-            Debug.Log("SimploPloof does not need cleaning right now.");
-        }
-    }
-
-    public void Unclog()
-    {
-        if (IsClogged)
-        {
-            Debug.Log("Unclogging SimploPloof...");
-            useCount = 4;
-        }
-        else
-        {
-            Debug.Log("SimploPloof is not clogged.");
-        }
-    }
-
-    public void Repair()
-    {
-        if (IsBroken)
-        {
-            Debug.Log("Repairing SimploPloof...");
-            IsBroken = false;
-            useCount = 0;
-        }
-        else
-        {
-            Debug.Log("SimploPloof does not need repairing.");
-        }
-    }
-
- public override void Interact(string interaction)
+public void Flush()
 {
-    switch (interaction)
+    if (CanFlush)
     {
-        case "Use":
-            Use();
-            break;
-        case "Flush":
-            Flush();
-            break;
-        case "Clean":
-            Clean();
-            break;
-        case "Unclog":
-            Unclog();
-            break;
-        case "Repair":
-            Repair();
-            break;
-        default:
-            Debug.Log("Invalid interaction.");
-            break;
+        Debug.Log("Flushing SimploPloof...");
+        useCount = 0;
+        //call the OnStateChanged method to raise the event
+        OnStateChanged();
+    }
+    else
+    {
+        Debug.Log("SimploPloof does not need flushing right now.");
+    }
+}
+
+public void Clean()
+{
+    if (NeedsCleaning)
+    {
+        Debug.Log("Cleaning SimploPloof...");
+        useCount = 0;
+        //call the OnStateChanged method to raise the event
+        OnStateChanged();
+    }
+    else
+    {
+        Debug.Log("SimploPloof does not need cleaning right now.");
+    }
+}
+
+public void Unclog()
+{
+    if (IsClogged)
+    {
+        Debug.Log("Unclogging SimploPloof...");
+        useCount = 4;
+        //call the OnStateChanged method to raise the event
+        OnStateChanged();
+    }
+    else
+    {
+        Debug.Log("SimploPloof is not clogged.");
+    }
+}
+
+public void Repair()
+{
+    if (IsBroken)
+    {
+        Debug.Log("Repairing SimploPloof...");
+        IsBroken = false;
+        useCount = 0;
+        //call the OnStateChanged method to raise the event
+        OnStateChanged();
+    }
+    else
+    {
+        Debug.Log("SimploPloof does not need repairing.");
+    }
+}
+
+
+
+public override void Interact(string prompt)
+{
+    //try to get the action from the dictionary
+    if (actions.TryGetValue(prompt, out System.Action action))
+    {
+        //invoke the action if it is not null
+        action?.Invoke();
+    }
+    else
+    {
+        //handle the case when the prompt is not valid
+        Debug.Log("Invalid prompt.");
     }
 }
 
 
 
 
-    // Replace the new keyword with the override keyword
-    public override List<string> GetAvailablePrompts()
-    {
-        List<string> prompts = new List<string>();
 
-        if (IsUsable) prompts.Add("Use");
-        if (CanFlush) prompts.Add("Flush");
-        if (NeedsCleaning) prompts.Add("Clean");
-        if (IsClogged) prompts.Add("Unclog");
-        if (IsBroken) prompts.Add("Repair");
+ public override List<string> GetAvailablePrompts()
+{
+    List<string> prompts = new List<string>();
 
-        return prompts;
-    }
+    if (IsUsable) prompts.Add(nameof(Use));
+    if (CanFlush) prompts.Add(nameof(Flush));
+    if (NeedsCleaning) prompts.Add(nameof(Clean));
+    if (IsClogged) prompts.Add(nameof(Unclog));
+    if (IsBroken) prompts.Add(nameof(Repair));
+
+    return prompts;
+}
+
 
 public override string GetState()
 {

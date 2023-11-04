@@ -2,57 +2,100 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-// A script that creates button prefabs for the interactions of a ZimObject
 public class ButtonCreator : MonoBehaviour
 {
-    // A reference to the ZimObject
-    public ZimObject zimObject;
-
-    // A reference to the button prefab
+    private ZimObject zimObject;
     public Button buttonPrefab;
-
-    // A reference to the canvas
     public Canvas canvas;
+    public CursorController cursorController;
+    private List<Button> buttons = new List<Button>();
 
-    // A list of buttons
-    private List<Button> buttons;
+    //declare the gameView, center, and radius variables
+    private GameObject gameView;
+    private GameObject center;
+    private float radius;
 
-    // A method that creates the buttons
-    public void CreateButtons()
+    private void Start()
     {
-        // Clear the existing buttons
-        if (buttons != null)
+        //assign the gameView variable to the Main Camera
+        gameView = Camera.main.gameObject;
+        //assign the center variable to a new empty game object
+        center = new GameObject("Center");
+        //assign the radius variable to a fixed value
+        radius = 1f;
+    }
+
+    private void OnEnable()
+    {
+        cursorController.ZimObjectClicked += OnZimObjectClicked;
+    }
+
+    private void OnDisable()
+    {
+        cursorController.ZimObjectClicked -= OnZimObjectClicked;
+    }
+
+   private void OnZimObjectClicked(object sender, ZimObjectClickedEventArgs e)
+{
+    //check if the ClickedZimObject is not null
+    if (e.ClickedZimObject != null)
+    {
+        zimObject = e.ClickedZimObject;
+        CreateButtons(zimObject);
+        //set the center to the clicked ZimObject's position
+        center.transform.position = zimObject.transform.position;
+        //call the ArrangeButtons method to update the positions of the buttons
+        ArrangeButtons();
+    }
+    else
+    {
+        Debug.LogError("No ZimObject was clicked");
+    }
+}
+
+    public void CreateButtons(ZimObject zimObject)
+    {
+        foreach (Button button in buttons)
         {
-            foreach (Button button in buttons)
-            {
-                Destroy(button.gameObject);
-            }
+            Destroy(button.gameObject);
         }
 
-        // Initialize the buttons list
-        buttons = new List<Button>();
+        buttons.Clear();
 
-        // Get the available prompts from the ZimObject
-        List<string> prompts = zimObject.GetAvailablePrompts();
-
-        // Loop through the prompts list
-        foreach (string prompt in prompts)
+        if (zimObject != null)
         {
-            // Instantiate a button prefab
-            Button newButton = Instantiate(buttonPrefab, canvas.transform);
+            List<string> prompts = zimObject.GetAvailablePrompts();
 
-            // Set the button text to the prompt
-            newButton.GetComponentInChildren<Text>().text = prompt;
-
-            // Add a listener to the button click event
-            newButton.onClick.AddListener(() => 
+            foreach (string prompt in prompts)
             {
-                // Call the Interact method of the ZimObject with the prompt as the parameter
-                zimObject.Interact(prompt);
-            });
+                Button newButton = Instantiate(buttonPrefab, canvas.transform);
+                newButton.GetComponentInChildren<Text>().text = prompt;
+                newButton.onClick.AddListener(() => zimObject.Interact(prompt));
+                buttons.Add(newButton);
+            }
+        }
+    }
 
-            // Add the button to the list
-            buttons.Add(newButton);
+    public void ArrangeButtons()
+    {
+        //get the up and right vectors from the gameView object so we can orient the buttons
+        Vector3 up = gameView.transform.up;
+        Vector3 right = gameView.transform.right;
+
+        //get the angle between each button, assuming equal spacing
+        float angle = 360f / buttons.Count;
+
+        //loop through the buttons and set their positions
+        for (int i = 0; i < buttons.Count; i++)
+        {
+            //convert degrees to radians
+            float rad = Mathf.Deg2Rad * angle * i;
+
+            //calculate the position using trigonometry
+            Vector3 pos = center.transform.position + (radius * right * Mathf.Cos(rad)) + (radius * up * Mathf.Sin(rad));
+
+            //set the position of the button
+            buttons[i].transform.position = pos;
         }
     }
 }
